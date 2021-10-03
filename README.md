@@ -1,4 +1,4 @@
-# edittext-locale-aware-thousands-separator
+# Locale aware, dynamic thousands separator for EditText
 Adding locale aware thousands separator dynamically as the user types
 
 Features:
