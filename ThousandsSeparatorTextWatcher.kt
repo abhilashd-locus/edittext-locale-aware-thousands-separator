@@ -100,10 +100,10 @@ class ThousandsSeparatorTextWatcher(private var editText: EditText?, private var
         }
 
         //get the double value of the entered number
-        val numberValue = AmountAndPaymentsDisplayUtil.getNumberFromFormattedCurrencyText(text)
+        val numberValue = getNumberFromFormattedCurrencyText(text)
 
         //re-format the number to get the correct separation format and symbols
-        var newText = AmountAndPaymentsDisplayUtil.getCurrencyFormattedAmountValue(numberValue)
+        var newText = getCurrencyFormattedAmountValue(numberValue)
 
         //If user was inputting decimal part of the number, reformatting will return a string without decimal point.
         //So we need to add it back after the reformatting is complete
@@ -151,5 +151,25 @@ class ThousandsSeparatorTextWatcher(private var editText: EditText?, private var
 
     interface TextChangedCallback {
         fun onChanged(newNumber: Double?)
+    }
+    
+    companion object{
+        
+        @JvmStatic
+        fun getNumberFromFormattedCurrencyText(formattedText: String?) = formattedText?.let {
+            val numberFormat = NumberFormat.getNumberInstance(Locale.getDefault())
+            try {
+                numberFormat.parse(it)?.toDouble()
+            } catch (exception: ParseException) {
+                0.0
+            }
+        } ?: 0.0
+
+        @JvmStatic
+        fun getCurrencyFormattedAmountValue(amount: Double?) = amount?.let {
+            val numberFormat = NumberFormat.getNumberInstance(Locale.getDefault())
+            numberFormat.maximumFractionDigits = 2
+            numberFormat.format(amount)
+        } ?: ""
     }
 }
