@@ -10,7 +10,7 @@ Features:
 
 Disadvantages:
 * Does not support copy/paste operations
-* In left-to-right languages (eg. Arabic), the cursor jumps to the end on deleting the first number
+* In right-to-left languages (eg. Arabic), the cursor jumps to the end on deleting the first number
 
 Note:
 * If you are programmatically setting text, always set formatted text returned by `getCurrencyFormattedAmountValue()`
