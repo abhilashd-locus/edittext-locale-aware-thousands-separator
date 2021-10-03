@@ -9,7 +9,7 @@ import java.text.DecimalFormatSymbols
 import java.util.Locale
 
 // ThousandsSeparatorTextWatcher.kt --> add this TextWatcher to the EditText you want to add the functionality of dynamic locale aware thousands separator
-class ThousandsSeparatorTextWatcher(private var editText: EditText?, private var callback: TextChangedCallback) : TextWatcher {
+class ThousandsSeparatorTextWatcher(private var editText: EditText?, private val callback: TextChangedCallback) : TextWatcher {
 
     //keeping a count of the digits before the cursor to reset the cursor at the correct place
     private var digitsBeforeCursor = -1
@@ -142,7 +142,7 @@ class ThousandsSeparatorTextWatcher(private var editText: EditText?, private var
     }
 
     /***
-     * Function to remove the listener and set EditText to null to prevent memory leaks
+     * Function to remove the listener and release reference to the EditText
      */
     fun removeWatcherFromEditText() {
         editText?.removeTextChangedListener(this)
