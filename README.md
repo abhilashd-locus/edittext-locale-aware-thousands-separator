@@ -13,4 +13,4 @@ Disadvantages:
 * In left-to-right languages (eg. Arabic), the cursor jumps to the end on deleting the first number
 
 Note:
-* If you are programmatically setting text, always set formatted text returned by `<getCurrencyFormattedAmountValue()>`
+* If you are programmatically setting text, always set formatted text returned by `getCurrencyFormattedAmountValue()`
