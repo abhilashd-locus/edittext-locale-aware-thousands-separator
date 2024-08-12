@@ -1,4 +1,3 @@
-
 import android.text.Editable
 import android.text.TextWatcher
 import android.text.method.DigitsKeyListener
@@ -99,11 +98,19 @@ class ThousandsSeparatorTextWatcher(private var editText: EditText?, private val
             return
         }
 
+        // Removing ',' or '.' according to Locale to have a consistency in formatting.
+        val groupingSeparatorRemovedText = text.filter {
+            it != DecimalFormatSymbols.getInstance(Locale.getDefault()).groupingSeparator
+        }
+
         //get the double value of the entered number
-        val numberValue = getNumberFromFormattedCurrencyText(text)
+        val numberValue = AmountAndPaymentsDisplayUtil.getNumberFromFormattedCurrencyText(groupingSeparatorRemovedText)
 
         //re-format the number to get the correct separation format and symbols
-        var newText = getCurrencyFormattedAmountValue(numberValue)
+        var newText = AmountAndPaymentsDisplayUtil.getCurrencyFormattedAmountValue(numberValue)
+
+        // formatting can round up the values, so for placing cursor in correct position we need to add this difference.
+        val difference = text.count { it != thousandSeparator } - newText.count { it != thousandSeparator }
 
         //If user was inputting decimal part of the number, reformatting will return a string without decimal point.
         //So we need to add it back after the reformatting is complete
@@ -125,12 +132,23 @@ class ThousandsSeparatorTextWatcher(private var editText: EditText?, private val
         //set the cursor to the right position after reformatting the string
         if (digitsBeforeCursor != -1) {
             var numbersParsed = 0
-            for (i in newText.indices) {
-                if (newText[i] != thousandSeparator) {
+            //adding the difference
+            for (i in 0 .. newText.length - 1 + difference) {
+                if (newText.length > i) {
+                    if (newText[i] != thousandSeparator) {
+                        numbersParsed++
+                    }
+                } else {
                     numbersParsed++
                 }
                 if (numbersParsed == digitsBeforeCursor) {
-                    editText?.setSelection(i + 1)
+                    if (i + 1 < newText.length)
+                        editText?.setSelection(i + 1)
+                    else
+                        editText?.setSelection(newText.length)
+                    break
+                } else if (digitsBeforeCursor == newText.length) {
+                    editText?.setSelection(newText.length)
                     break
                 }
             }
@@ -142,34 +160,14 @@ class ThousandsSeparatorTextWatcher(private var editText: EditText?, private val
     }
 
     /***
-     * Function to remove the listener and release reference to the EditText
+     * Function to remove the listener and set EditText to null to prevent memory leaks
      */
     fun removeWatcherFromEditText() {
         editText?.removeTextChangedListener(this)
         editText = null
     }
 
-    interface TextChangedCallback {
+    fun interface TextChangedCallback {
         fun onChanged(newNumber: Double?)
-    }
-    
-    companion object{
-        
-        @JvmStatic
-        fun getNumberFromFormattedCurrencyText(formattedText: String?) = formattedText?.let {
-            val numberFormat = NumberFormat.getNumberInstance(Locale.getDefault())
-            try {
-                numberFormat.parse(it)?.toDouble()
-            } catch (exception: ParseException) {
-                0.0
-            }
-        } ?: 0.0
-
-        @JvmStatic
-        fun getCurrencyFormattedAmountValue(amount: Double?) = amount?.let {
-            val numberFormat = NumberFormat.getNumberInstance(Locale.getDefault())
-            numberFormat.maximumFractionDigits = 2
-            numberFormat.format(amount)
-        } ?: ""
     }
 }
