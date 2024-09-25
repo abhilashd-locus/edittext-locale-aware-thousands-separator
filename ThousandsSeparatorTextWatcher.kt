@@ -4,7 +4,10 @@ import android.text.method.DigitsKeyListener
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
+import java.math.RoundingMode
 import java.text.DecimalFormatSymbols
+import java.text.NumberFormat
+import java.text.ParseException
 import java.util.Locale
 
 // ThousandsSeparatorTextWatcher.kt --> add this TextWatcher to the EditText you want to add the functionality of dynamic locale aware thousands separator
@@ -25,6 +28,7 @@ class ThousandsSeparatorTextWatcher(private var editText: EditText?, private val
 
             //diabling text selection
             isLongClickable = false
+            setOnLongClickListener(null)
             setTextIsSelectable(false)
 
             //ensuring correct input type
@@ -33,10 +37,10 @@ class ThousandsSeparatorTextWatcher(private var editText: EditText?, private val
     }
 
     private fun disableTextSelection(editText: EditText) {
+        val callback = object : android.view.ActionMode.Callback {
 
-        editText.customSelectionActionModeCallback = object : android.view.ActionMode.Callback {
-
-            override fun onActionItemClicked(mode: android.view.ActionMode?, item: MenuItem?) = false
+            override fun onActionItemClicked(mode: android.view.ActionMode?, item: MenuItem?) =
+                false
 
             override fun onCreateActionMode(mode: android.view.ActionMode?, menu: Menu?) = false
 
@@ -44,6 +48,8 @@ class ThousandsSeparatorTextWatcher(private var editText: EditText?, private val
 
             override fun onDestroyActionMode(mode: android.view.ActionMode?) {}
         }
+        editText.customSelectionActionModeCallback = callback
+        editText.customInsertionActionModeCallback = callback
     }
 
     /***
@@ -104,17 +110,25 @@ class ThousandsSeparatorTextWatcher(private var editText: EditText?, private val
         }
 
         //get the double value of the entered number
-        val numberValue = AmountAndPaymentsDisplayUtil.getNumberFromFormattedCurrencyText(groupingSeparatorRemovedText)
+        val numberValue = try {
+            NumberFormat.getNumberInstance(Locale.getDefault())
+                .parse(groupingSeparatorRemovedText)?.toDouble()
+        } catch (exception: ParseException) {
+            0.0
+        }
 
         //re-format the number to get the correct separation format and symbols
-        var newText = AmountAndPaymentsDisplayUtil.getCurrencyFormattedAmountValue(numberValue)
+        var newText = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
+            maximumFractionDigits = 2
+            roundingMode = RoundingMode.DOWN
+        }.format(numberValue)
 
         // formatting can round up the values, so for placing cursor in correct position we need to add this difference.
         val difference = text.count { it != thousandSeparator } - newText.count { it != thousandSeparator }
 
         //If user was inputting decimal part of the number, reformatting will return a string without decimal point.
         //So we need to add it back after the reformatting is complete
-        if (text.endsWith(decimalMarker)) {
+        if (text.endsWith(decimalMarker) && !newText.contains(decimalMarker)) {
             newText += decimalMarker
         } else if (text.endsWith(decimalMarker + "0")) {
             newText += decimalMarker + "0"
